@@ -23,7 +23,7 @@ export default function App() {
   return (
     <Router>
       <div style={{ padding: '1rem', background: '#BFA2DB', color: '#fff' }}>
-        <Link to="/" style={{ marginRight: '1rem', color: '#fff' }}>Сегодня</Link>
+        <Link to="/" style={{ marginRight: '1rem', color: '#fff' }}>✨Сегодня</Link>
         <Link to="/calendar" style={{ marginRight: '1rem', color: '#fff' }}>Календарь</Link>
         <Link to="/add" style={{ marginRight: '1rem', color: '#fff' }}>Добавить</Link>
         <Link to="/clients" style={{ color: '#fff' }}>Клиенты</Link>
