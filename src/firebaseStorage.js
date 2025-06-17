@@ -1,7 +1,6 @@
 // firebaseStorage.js
-import { initializeApp } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
-import { firebaseConfig } from './firebaseConfig';
+import app from './firebaseConfig'; // импорт уже инициализированного app
 
-const app = initializeApp(firebaseConfig);
+// Экспортируем экземпляр хранилища
 export const storage = getStorage(app);
