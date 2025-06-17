@@ -1,62 +1,103 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { ref as dbRef, onValue, set, get } from 'firebase/database';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '../firebaseConfig';
+import { storage } from '../firebaseStorage'; // Создай firebaseStorage.js с инициализацией storage
 
-export default function ClientCard({ events }) {
+export default function ClientCard() {
   const { name } = useParams();
-  const clientKey = `photos_${name.toLowerCase()}`;
+  const [selectedDate, setSelectedDate] = useState('');
+  const [beforePhoto, setBeforePhoto] = useState(null);
+  const [afterPhoto, setAfterPhoto] = useState(null);
+  const [imageURLs, setImageURLs] = useState({ before: '', after: '' });
 
-  const clientEvents = events.filter(e => e.title.toLowerCase().startsWith(name.toLowerCase()));
-  const [images, setImages] = useState([]);
-
-  // Загружаем из localStorage
   useEffect(() => {
-    const saved = localStorage.getItem(clientKey);
-    if (saved) {
-      setImages(JSON.parse(saved));
+    if (name && selectedDate) {
+      const path = `clients/${name}/appointments/${selectedDate}`;
+      const appointmentRef = dbRef(db, path);
+      get(appointmentRef).then(snapshot => {
+        const data = snapshot.val();
+        if (data) {
+          setImageURLs({
+            before: data.before || '',
+            after: data.after || ''
+          });
+        }
+      });
     }
-  }, [clientKey]);
+  }, [name, selectedDate]);
 
-  // Обработка загрузки фото
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
+  const handleUpload = async (file, type) => {
+    if (!selectedDate) {
+      alert('Сначала выберите дату приёма!');
+      return;
+    }
+    const fileRef = storageRef(storage, `clients/${name}/${selectedDate}/${type}.jpg`);
+    await uploadBytes(fileRef, file);
+    const url = await getDownloadURL(fileRef);
 
-    Promise.all(files.map(fileToDataUrl)).then((base64Images) => {
-      const updated = [...images, ...base64Images];
-      setImages(updated);
-      localStorage.setItem(clientKey, JSON.stringify(updated));
+    // Сохраняем в Realtime Database
+    const dbPath = dbRef(db, `clients/${name}/appointments/${selectedDate}`);
+    set(dbPath, {
+      ...imageURLs,
+      [type]: url
     });
+
+    setImageURLs(prev => ({ ...prev, [type]: url }));
   };
-
-  const fileToDataUrl = (file) =>
-    new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve({ name: file.name, url: reader.result });
-      reader.readAsDataURL(file);
-    });
 
   return (
     <div style={{ padding: '2rem' }}>
-      <h2 style={{ fontSize: '24px', color: '#7B5EA7' }}>Карточка клиента: {name}</h2>
+      <h2 style={{ color: '#BFA2DB' }}>Карточка клиента: {name}</h2>
 
-      <h4 style={{ marginTop: '1.5rem', fontSize: '18px' }}>История записей:</h4>
-      <ul style={{ marginBottom: '2rem' }}>
-        {clientEvents.map((e, i) => (
-          <li key={i}>📅 {e.date} — {e.title}</li>
-        ))}
-      </ul>
+      <label style={{ display: 'block', margin: '1rem 0' }}>
+        Выберите дату приёма:
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={e => setSelectedDate(e.target.value)}
+          style={{ marginLeft: '1rem' }}
+        />
+      </label>
 
-      <h4 style={{ marginBottom: '0.5rem' }}>Загрузить фото (до / после):</h4>
-      <input type="file" accept="image/*" multiple onChange={handleImageUpload} />
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
-        {images.map((img, i) => (
-          <div key={i}>
-            <img src={img.url} alt={img.name} style={{ width: '150px', borderRadius: '8px' }} />
-          </div>
-        ))}
+      <div style={{ marginTop: '1rem' }}>
+        <label><strong>Фото ДО:</strong>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => handleUpload(e.target.files[0], 'before')}
+          />
+        </label>
+        {imageURLs.before && (
+          <img
+            src={imageURLs.before}
+            alt="Before"
+            style={{ width: '150px', marginTop: '1rem', display: 'block' }}
+          />
+        )}
       </div>
 
-      <Link to="/clients" style={{ display: 'inline-block', marginTop: '2rem', color: '#BFA2DB' }}>← Назад</Link>
+      <div style={{ marginTop: '2rem' }}>
+        <label><strong>Фото ПОСЛЕ:</strong>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => handleUpload(e.target.files[0], 'after')}
+          />
+        </label>
+        {imageURLs.after && (
+          <img
+            src={imageURLs.after}
+            alt="After"
+            style={{ width: '150px', marginTop: '1rem', display: 'block' }}
+          />
+        )}
+      </div>
+
+      <div style={{ marginTop: '2rem' }}>
+        <a href="/clients" style={{ color: '#BFA2DB' }}>← Назад</a>
+      </div>
     </div>
   );
 }
