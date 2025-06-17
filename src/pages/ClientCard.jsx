@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ref as dbRef, onValue, set, get } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db } from '../firebaseConfig';
-import { storage } from "../firebaseStorage.js";
+import { db } from '../firebaseConfig.js';
+import { storage } from '../firebaseStorage'; // путь должен совпадать
  // Создай firebaseStorage.js с инициализацией storage
 
 export default function ClientCard() {
