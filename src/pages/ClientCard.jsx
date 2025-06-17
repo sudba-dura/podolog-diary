@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import { ref as dbRef, onValue, set, get } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../firebaseConfig';
-import { storage } from '../firebaseStorage'; // Создай firebaseStorage.js с инициализацией storage
+import { storage } from "../firebaseStorage.js";
+ // Создай firebaseStorage.js с инициализацией storage
 
 export default function ClientCard() {
   const { name } = useParams();
@@ -43,7 +44,7 @@ export default function ClientCard() {
       ...imageURLs,
       [type]: url
     });
-
+0
     setImageURLs(prev => ({ ...prev, [type]: url }));
   };
 
